@@ -1,25 +1,27 @@
-import { WebsocketClient, USDMClient, isWsFormattedFuturesUserDataEvent } from 'binance'
+import { isWsFormattedFuturesUserDataEvent } from 'binance'
+import { WsClientExd } from './wsClientExd';
+import { UsdmClientExd } from './usdmClientExd'
 
 export class User {
 
-    private wsClient: WebsocketClient;
-    private usdmClient: USDMClient;
+    private wsClient: WsClientExd;
+    private usdmClient: UsdmClientExd;
 
-    constructor(api_key: string, api_secret: string) {
+    constructor(data: UserData) {
 
-        this.wsClient = new WebsocketClient({
-                api_key: api_key,
-                api_secret: api_secret,
+        this.wsClient = new WsClientExd({
+                api_key: data.api_key,
+                api_secret: data.api_secret,
                 beautify: true,
         })
 
-        this.usdmClient = new USDMClient({
-            api_key: api_key,
-            api_secret: api_secret,
+        this.usdmClient = new UsdmClientExd({
+            api_key: data.api_key,
+            api_secret: data.api_secret,
         })
 
         this.wsClient.subscribeAllLiquidationOrders("usdm", false);
-        this.wsClient.subscribeUsdFuturesUserDataStream(true, true, true);
+        this.wsClient.subscribeUsdFuturesUserDataStream(data.isTestnet, true, true);
 
         this.start();
 
@@ -27,11 +29,17 @@ export class User {
 
     private start() {
         this.wsClient.on("formattedMessage", (msg) => {
+
             if(isWsFormattedFuturesUserDataEvent(msg)) {
+
                 console.log("Formated futures user data event")
+
             } else if("eventType" in msg){
+
                 console.log(msg.eventType)
+
             }
+
         })
     }
 }
