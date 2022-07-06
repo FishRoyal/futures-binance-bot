@@ -1,15 +1,23 @@
-import { isWsFormattedFuturesUserDataEvent } from 'binance'
-import { WsClientExd } from './wsClientExd';
+import { isWsFormattedFuturesUserDataEvent, WebsocketClient} from 'binance'
 import { UsdmClientExd } from './usdmClientExd'
+import { OrderData, UserData } from './types';
+import { OrderBuilder } from './orderBuilder';
+import { OrdersCanceller } from './ordersCanceller';
 
 export class User {
 
-    private wsClient: WsClientExd;
+    private wsClient: WebsocketClient;
     private usdmClient: UsdmClientExd;
+    private orderBuilder: OrderBuilder;
+    private userData: UserData;
+    private dataForOrders: OrderData | undefined;
+    private ordersCanceller: OrdersCanceller;
+
+    private isLiquidationStreamLocked: boolean;
 
     constructor(data: UserData) {
 
-        this.wsClient = new WsClientExd({
+        this.wsClient = new WebsocketClient({
                 api_key: data.api_key,
                 api_secret: data.api_secret,
                 beautify: true,
@@ -18,25 +26,86 @@ export class User {
         this.usdmClient = new UsdmClientExd({
             api_key: data.api_key,
             api_secret: data.api_secret,
-        })
+        }, undefined, data.isTestnet)
+
+        this.dataForOrders = undefined;
+
+        this.orderBuilder = new OrderBuilder(this.usdmClient);
+        this.ordersCanceller = new OrdersCanceller(this.usdmClient);
 
         this.wsClient.subscribeAllLiquidationOrders("usdm", false);
         this.wsClient.subscribeUsdFuturesUserDataStream(data.isTestnet, true, true);
+
+        this.userData = data;
+
+        this.isLiquidationStreamLocked = false;
 
         this.start();
 
     }
 
     private start() {
-        this.wsClient.on("formattedMessage", (msg) => {
+        this.wsClient.on("formattedMessage", async (msg) => {
 
             if(isWsFormattedFuturesUserDataEvent(msg)) {
 
-                console.log("Formated futures user data event")
+                if("order" in msg && msg.order.orderStatus === "FILLED" && msg.order.orderType === "LIMIT") {
+                    if(msg.order.orderSide === "BUY") {
+                        let isOpened: boolean | undefined = false;
+                        if(typeof this.dataForOrders !== "undefined") {
+                            isOpened = await this.ordersCanceller.isPositionOpened(this.dataForOrders.symbol)
+                            if(typeof isOpened !== undefined && isOpened) { 
+                                const marketOrder = this.orderBuilder.getMarketOrder(this.dataForOrders, "BUY")
+                                await this.usdmClient.openPosition(marketOrder);
+                                await this.ordersCanceller.cancellAllOpenOrders(this.dataForOrders.symbol);
+                            }
+                        }
 
-            } else if("eventType" in msg){
+                        this.dataForOrders = undefined;
+                        this.isLiquidationStreamLocked = false;
+                    }
 
-                console.log(msg.eventType)
+                    if(msg.order.orderSide === "SELL") {
+                        console.log("SELL order")
+                        if(typeof this.dataForOrders !== "undefined")
+                            await this.usdmClient.createLimitOrder(this.orderBuilder.getLimitOrder(this.dataForOrders, -1, "BUY"));
+                    }
+                } else
+
+                if("order" in msg && msg.order.orderStatus === "CANCELED") {
+                    let isOpened: boolean | undefined = false;
+                    if(typeof this.dataForOrders !== "undefined") {
+                        isOpened = await this.ordersCanceller.isPositionOpened(this.dataForOrders.symbol);
+                        if(typeof isOpened !== undefined && !isOpened) {
+                            await this.ordersCanceller.cancellAllOpenOrders(this.dataForOrders.symbol);
+                            this.dataForOrders = undefined;
+                            this.isLiquidationStreamLocked = false;
+                        }
+                    }
+                }
+
+            } else if("eventType" in msg) {
+
+                if("liquidationOrder" in msg && !this.isLiquidationStreamLocked) {
+
+                    console.log('here')
+
+                    this.isLiquidationStreamLocked = true;
+
+                    this.dataForOrders = await this.orderBuilder.setDataForOrders(msg.liquidationOrder.symbol,
+                        this.userData.percent, this.userData.leverage);
+
+                    const res = await this.usdmClient.openPosition(this.orderBuilder.getMarketOrder(this.dataForOrders, "SELL"));
+                    for(let i = 1; i <= 9; i++) {
+                       const limit = await this.usdmClient.createLimitOrder(this.orderBuilder.getLimitOrder(this.dataForOrders, i, "SELL"));
+                       console.log(limit)
+                    }
+                    
+                    await this.usdmClient.createLimitOrder(this.orderBuilder.getLimitOrder(this.dataForOrders, -1, "BUY"));
+
+                } else {
+                    console.log("liquidation")
+                }
 
             }
 

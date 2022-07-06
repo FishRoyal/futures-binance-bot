@@ -48,7 +48,7 @@ export class Utils {
     }
 
     public getQuantity(balance: number, price: number, precision: number, percent: number, leverage: number) {
-        const quantity = this.floorPrecised((balance * percent * leverage / price * 0.9), precision);
+        const quantity = this.floorPrecised((balance * percent / 100 * leverage / price * 0.9), precision);
         return quantity;
     }
 
@@ -56,7 +56,7 @@ export class Utils {
         return this.floorPrecised( ((await this.usdmClient.getMarkPrice({isIsolated: "FALSE", symbol: symbol})).markPrice), pricePrecision );
     }
 
-    private floorPrecised(number: number, precision: number) {
+    public floorPrecised(number: number, precision: number) {
         var power = Math.pow(10, precision);
         return Math.floor(number * power) / power;
     }

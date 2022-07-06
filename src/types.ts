@@ -19,6 +19,7 @@ export type UserData = {
     api_key: string,
     api_secret: string,
     leverage: number,
+    percent: number,
     isTestnet: boolean
 }
 
