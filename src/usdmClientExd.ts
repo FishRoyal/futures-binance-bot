@@ -7,7 +7,9 @@ export class UsdmClientExd extends USDMClient{
         super(restClientOptions, requestOptions, useTestnet);
     }
 
-    public async openPosition(data: MarketOrderData): Promise<boolean> {
+    public async openPosition(data: MarketOrderData | undefined): Promise<boolean> {
+        if(typeof data === "undefined") return false;
+        console.log("symbol:", data.symbol)
         try {
             await this.submitNewOrder({
                 side: data.side,
@@ -18,11 +20,13 @@ export class UsdmClientExd extends USDMClient{
             })
             return true;
         } catch(e) {
+            console.log(e);
             return false;
         }
     }
 
-    public async createLimitOrder(data: LimitOrderData): Promise<boolean> {
+    public async createLimitOrder(data: LimitOrderData | undefined): Promise<boolean> {
+        if(typeof data === "undefined") return false;
         try {
             await this.submitNewOrder({
                 side: data.side,
