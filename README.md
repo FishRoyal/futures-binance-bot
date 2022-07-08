@@ -2,7 +2,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)   
 This bot catches liquidation signals from binance api, opens SHORT positions and makes easy money.
 ### Strategy
-When the bot gets SHORT liquidation signal with margin higher than 50000$, it means that the current cryptocurrency goes up.
+When the bot gets SHORT liquidation signal (3-4 times per day) with margin higher than 50000$, it means that the current cryptocurrency goes up.
 The bot takes part of your futures balance and devides it by ten parts. One part goes to MARKET
 position, other nine parts goes to LIMIT safety orders.
 Difference between positions is 10% up including leverage. TAKE-PROFIT LIMIT order is always 10% under MARKET position including leverage.
@@ -33,4 +33,8 @@ npm isntall
 ```bash
 npx tsc
 node ./build/index.js
-```
+```   
+### Roadmap   
+-> Testing in mainnet   
+-> Fixing bugs   
+-> Strategy improvement
