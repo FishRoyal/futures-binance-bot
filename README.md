@@ -27,7 +27,7 @@ USDM client allows to open orders. With class OrderBuilder you get data for a ne
 ```bash
 git clone https://github.com/FishRoyal/futures-binance-bot.git
 cd ./futures-binance-bot
-npm isntall
+npm install
 ```
 > Then add your binance api-key and api-secret to src/index.ts
 ```bash
