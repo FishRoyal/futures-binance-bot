@@ -25,7 +25,7 @@ USDM client allows to open orders. With class OrderBuilder you get data for a ne
 "createLimitOrder"   
 ### Getting Started   
 ```bash
-git clone https://github.com/belousov200/futures-binance-bot.git
+git clone https://github.com/FishRoyal/futures-binance-bot.git
 cd ./futures-binance-bot
 npm isntall
 ```
