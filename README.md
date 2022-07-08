@@ -38,3 +38,6 @@ node ./build/index.js
 -> Testing in mainnet   
 -> Fixing bugs   
 -> Strategy improvement
+
+### Disclaimer   
+Futures trading is always associated with risk. I am not responsible for possible losses.
