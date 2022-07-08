@@ -20,6 +20,7 @@ export type UserData = {
     api_secret: string,
     leverage: number,
     percent: number,
+    ignoreTokens: string[],
     isTestnet: boolean
 }
 

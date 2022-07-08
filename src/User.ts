@@ -3,6 +3,7 @@ import { UsdmClientExd } from './usdmClientExd'
 import { OrderData, UserData } from './types';
 import { OrderBuilder } from './orderBuilder';
 import { OrdersCanceller } from './ordersCanceller';
+import { Signal } from './Signal';
 
 export class User {
 
@@ -12,6 +13,7 @@ export class User {
     private userData: UserData;
     private dataForOrders: OrderData | undefined;
     private ordersCanceller: OrdersCanceller;
+    private signal: Signal;
 
     private isLiquidationStreamLocked: boolean;
 
@@ -32,6 +34,7 @@ export class User {
 
         this.orderBuilder = new OrderBuilder(this.usdmClient);
         this.ordersCanceller = new OrdersCanceller(this.usdmClient);
+        this.signal = new Signal(data.ignoreTokens);
 
         this.wsClient.subscribeAllLiquidationOrders("usdm", false);
         this.wsClient.subscribeUsdFuturesUserDataStream(data.isTestnet, true, true);
@@ -86,14 +89,15 @@ export class User {
 
             } else if("eventType" in msg) {
 
-                if("liquidationOrder" in msg && !this.isLiquidationStreamLocked) {
+                if("liquidationOrder" in msg && !this.isLiquidationStreamLocked && this.signal.ifSignalApproach(msg.liquidationOrder)) {
 
-                    console.log('here')
+                    console.log('liquidation order catched')
 
                     this.isLiquidationStreamLocked = true;
 
                     this.dataForOrders = await this.orderBuilder.setDataForOrders(msg.liquidationOrder.symbol,
                         this.userData.percent, this.userData.leverage);
+
 
                     const res = await this.usdmClient.openPosition(this.orderBuilder.getMarketOrder(this.dataForOrders, "SELL"));
                     for(let i = 1; i <= 9; i++) {
@@ -103,9 +107,7 @@ export class User {
                     
                     await this.usdmClient.createLimitOrder(this.orderBuilder.getLimitOrder(this.dataForOrders, -1, "BUY"));
 
-                } else {
-                    console.log("liquidation")
-                }
+                } 
 
             }
 
