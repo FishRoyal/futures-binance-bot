@@ -1,5 +1,9 @@
 ## FUTURES-BINANCE-BOT   
+![Binance](https://img.shields.io/badge/Binance-FCD535?style=for-the-badge&logo=binance&logoColor=white)
+![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)   
+![GIF](https://media.giphy.com/media/Y3oM9aagGkAb6lXe8f/giphy.gif)   
 This bot catches liquidation signals from binance api, opens SHORT positions and makes easy money.
 ### Strategy
 When the bot gets SHORT liquidation signal (3-4 times per day) with margin higher than 50000$, it means that the current cryptocurrency goes up.
