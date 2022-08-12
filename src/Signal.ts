@@ -6,7 +6,7 @@ export class Signal {
 
     public ifSignalApproach(liqOrder: any): boolean {
         const symbol = liqOrder.symbol;
-        if(!(symbol.includes("USDT")) return false;
+        if( !( symbol.includes("USDT") ) ) return false;
         if(symbol in this.ignoreTokens) return false;
         if(liqOrder.price <= 50000) return false;
         if(liqOrder.side !== "BUY") return false;
